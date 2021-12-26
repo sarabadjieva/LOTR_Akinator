@@ -293,7 +293,6 @@ namespace LOTRAkinator
 
             if (GetAnswer() == Answer.Yes)
             {
-                WriteToFiles();
                 PlayAgain();
             }
             else if (last)
