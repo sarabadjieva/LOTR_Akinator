@@ -12,12 +12,7 @@ namespace LOTRAkinator
 
             GameController game = new GameController(lang);
 
-            //game loop
-            while (!game.IsFinished)
-            {
-                game.AskQuestion();
-            }
+            game.StartGame();
         }
-
     }
 }
