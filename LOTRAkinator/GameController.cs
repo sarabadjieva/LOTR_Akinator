@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -49,6 +50,11 @@ namespace LOTRAkinator
 
     class GameController
     {
+        private const string enCharactersFilePath = "Characters.txt";
+        private const string enQuestionsFilePath = "Questions.txt";
+        private const string bgCharactersFilePath = "";
+        private const string bgQuestionsFilePath = "";
+        
         private readonly List<Character> characters = new List<Character>();
         private readonly Dictionary<int, string> questionsById = new Dictionary<int, string>();
 
@@ -62,6 +68,12 @@ namespace LOTRAkinator
         public GameController(string languageSetting)
         {
             SetLanguageSetting(languageSetting);
+        }
+
+        public void StartGame()
+        {
+            ResetData();
+            GameLoop();
         }
 
         private void SetLanguageSetting(string languageSetting)
@@ -91,8 +103,8 @@ namespace LOTRAkinator
             switch (currentLanguage)
             {
                 case Language.English:
-                    charactersFile = "Characters.txt";
-                    questionsFile = "Questions.txt";
+                    charactersFile = enCharactersFilePath;
+                    questionsFile = enQuestionsFilePath;
                     break;
                 case Language.Bulgarian:
                     break;
@@ -158,22 +170,44 @@ namespace LOTRAkinator
             }
         }
 
-        public void StartGame()
+        private void WriteToFiles()
         {
-            ResetData();
-            GameLoop();
-        }
+            string charactersFile = string.Empty;
+            string questionsFile = string.Empty;
 
-        private void ResetData()
-        {
-            stop = false;
-            possibleCharacters = new List<Character>();
-            foreach (Character item in characters)
+            switch (currentLanguage)
             {
-                possibleCharacters.Add(new Character(item));
+                case Language.English:
+                    charactersFile = enCharactersFilePath;
+                    questionsFile = enQuestionsFilePath;
+                    break;
+                case Language.Bulgarian:
+                    break;
+                default:
+                    break;
             }
 
-            askedQuestions.Clear();
+            string overwriteCharacters = string.Empty;
+            foreach (var character in characters)
+            {
+                overwriteCharacters += character.name + "-" + string.Join(",",character.GetQuestionIndexes()) + Environment.NewLine;
+            }
+
+            using (StreamWriter writer = new StreamWriter(charactersFile, false))
+            {
+                writer.Write(overwriteCharacters);
+            }
+
+            string overwriteQuestions = string.Empty;
+            foreach (var questionStringWithID in questionsById)
+            {
+                overwriteQuestions += questionStringWithID.Key + ":" + questionStringWithID.Value + Environment.NewLine;
+            }
+
+            using (StreamWriter writer = new StreamWriter(questionsFile, false))
+            {
+                writer.Write(overwriteQuestions);
+            }
         }
 
         private void GameLoop()
@@ -185,10 +219,12 @@ namespace LOTRAkinator
 
             if (possibleCharacters.Count != 0)
             {
-                MakeGuess(possibleCharacters.First().name);
+                for (int i = 0; i < possibleCharacters.Count; i++)
+                {
+                    //stops if the player has guessed right
+                    MakeGuess(possibleCharacters[i].name, i == possibleCharacters.Count - 1);
+                }
             }
-
-            PrintMessage("end", "end");
         }
 
         private void AskQuestion()
@@ -199,13 +235,17 @@ namespace LOTRAkinator
             {
                 allIndexes.AddRange(character.GetQuestionIndexes());
             }
-            Console.WriteLine(allIndexes.Count);
+
             foreach (Question askedQuestion in askedQuestions)
             {
                 allIndexes.RemoveAll(questionIndex => questionIndex == askedQuestion.index);
             }
-            Console.WriteLine(allIndexes.Count);
 
+            //test
+            foreach (var item in possibleCharacters)
+            {
+                Console.Write(item.name + ' ') ;
+            }
 
             if (allIndexes.Count == 0)
             {
@@ -228,22 +268,17 @@ namespace LOTRAkinator
 
             foreach (var character in possibleCharacters)
             {
-                if (character.ContainsQuestion(mostCommonQuestionIndex))
+                if ((character.ContainsQuestion(mostCommonQuestionIndex) && !answer) ||
+                    (!character.ContainsQuestion(mostCommonQuestionIndex) && answer))
                 {
-                    if (!answer)
-                    //{
-                    //    character.SetQuestionAnswer(mostCommonQuestionIndex);
-                    //}
-                    //else
-                    {
-                        character.RemoveQuestion(mostCommonQuestionIndex);
-                    }
-
-                    if (character.matchingQuestionIndexes.Count == 0)
-                    {
-                        charactersToRemove.Add(character);
-                    }
+                    charactersToRemove.Add(character);
                 }
+
+                /*if (character.matchingQuestionIndexes.Count == 0 || )
+                {
+                    //removes characters with no questions
+                    charactersToRemove.Add(character);
+                }*/
             }
 
             for (int i = 0; i < charactersToRemove.Count; i++)
@@ -252,16 +287,16 @@ namespace LOTRAkinator
             }
         }
 
-        private void MakeGuess(string name)
+        private void MakeGuess(string name, bool last = false)
         {
             PrintMessage("Is your character " + name + "?", "Героят ви " + name + " ли е?");
-            Console.WriteLine();
 
             if (GetAnswer() == Answer.Yes)
             {
+                WriteToFiles();
                 PlayAgain();
             }
-            else
+            else if (last)
             {
                 PrintMessage("What is the name of your character?", "Как се казва героят ви? Напишете на английски (засега)");
 
@@ -312,6 +347,18 @@ namespace LOTRAkinator
             {
                 Environment.Exit(1);
             }
+        }
+
+        private void ResetData()
+        {
+            stop = false;
+            possibleCharacters = new List<Character>();
+            foreach (Character item in characters)
+            {
+                possibleCharacters.Add(new Character(item));
+            }
+
+            askedQuestions.Clear();
         }
 
         private Answer GetAnswer()
