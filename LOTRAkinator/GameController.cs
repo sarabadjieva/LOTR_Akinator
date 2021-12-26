@@ -164,10 +164,6 @@ namespace LOTRAkinator
             {
                 Console.WriteLine("Exception: " + e.Message);
             }
-            finally
-            {
-                Console.WriteLine("Executing finally block.");
-            }
         }
 
         private void WriteToFiles()
@@ -306,14 +302,25 @@ namespace LOTRAkinator
                     if (character.name.ToLower() == playerCharacter.ToLower())
                     {
                         PrintMessage("Here are your answers:", "Ето как сте отговорили:");
-                        foreach (Question question in askedQuestions)
+                        foreach (Question askedQuestion in askedQuestions)
                         {
-                            Console.WriteLine(questionsById[question.index] + " " + question.positiveAnswer);
+                            Console.WriteLine(questionsById[askedQuestion.index] + " " + askedQuestion.positiveAnswer);
                         }
 
                         PrintMessage("Have I made a mistake?", "Аз ли съм направила грешка?");
                         if (GetAnswer() == Answer.Yes)
                         {
+                            PrintMessage("Please write the index of the wrong answer", "Моля напишете индекса на грешния въпрос");
+                            int index = int.Parse(Console.ReadLine().Trim());
+
+                            if (character.ContainsQuestion(index))
+                            {
+                                character.RemoveQuestion(index);
+                            }
+                            else
+                            {
+                                character.AddQuestion(index);
+                            }
 
                             return;
                         }
@@ -321,7 +328,7 @@ namespace LOTRAkinator
                         PrintMessage("Have you made a mistake?", "Вие ли сте направили грешка?");
                         if (GetAnswer() == Answer.Yes)
                         {
-
+                            PrintMessage("Well, be more careful next time", "Бъдете по-внимателни следващия път");
                             return;
                         }
 
@@ -329,7 +336,60 @@ namespace LOTRAkinator
                     }
                 }
 
-                //else new character with same answers? -> new question
+                //if the player's character does not match with any of the programs
+                PrintMessage("I don't know this character. Can you please add a question with which I can distinguish him from others?",
+                    "Не знам този герой. Може ли да ми кажете въпрос, с който бих могла да го различа?");
+                string question = Console.ReadLine();
+                questionsById.Add(questionsById.Count, question);
+
+                //add the question to others
+                PrintMessage("For which other characters from the list is this question also valid (if it is)",
+                    "За кои други герои от списъка е валиден този въпрос(ако има такива)");
+                foreach (var character in characters)
+                {
+                    Console.Write(character.name + ' ');
+                }
+
+                int numOfCharacters = characters.Count;
+                List<string> charactersToAddQuestionTo = new List<string>();
+                string input = string.Empty;
+                for (int i = 0; i < numOfCharacters; i++)
+                {
+                    input = Console.ReadLine(); 
+
+                    if (string.IsNullOrEmpty(input))
+                    {
+                        break;
+                    }
+
+                    charactersToAddQuestionTo.Add(input);
+                }
+
+                foreach (var character in characters)
+                {
+                    if (charactersToAddQuestionTo.Contains(character.name))
+                    {
+                        character.AddQuestion(questionsById.Count);
+                    }
+                }
+
+                //add the character and the asked matching questions to the array
+                List<int> matchingQuestions = new List<int>() { questionsById.Count };
+
+                foreach (Question askedQuestion in askedQuestions)
+                {
+                    if (askedQuestion.positiveAnswer)
+                    {
+                        matchingQuestions.Add(askedQuestion.index);
+                    }
+                }
+
+                Character newCharacter = new Character(playerCharacter, matchingQuestions);
+                characters.Add(newCharacter);
+
+                WriteToFiles();
+                ReadFiles();
+                PlayAgain();
             }
         }
 

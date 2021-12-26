@@ -9,12 +9,6 @@ namespace LOTRAkinator
         public static bool ContainsQuestion(this Character character, int index)
         {
             return character.matchingQuestionIndexes.Contains(index);
-            /*foreach (Question question in character.matchingQuestions)
-            {
-                if (question.index == index) return true;
-            }
-
-            return false;*/
         }
 
         public static void RemoveQuestion(this Character character, int index)
@@ -23,47 +17,19 @@ namespace LOTRAkinator
             {
                 character.matchingQuestionIndexes.Remove(index);
             }
-            /*Question questionToRemove = new Question(-1);
-
-            foreach (Question question in character.matchingQuestions)
-            {
-                if (question.index == index)
-                {
-                    questionToRemove = question;
-                    break;
-                }
-            }
-
-            if (questionToRemove.index != -1)
-            {
-                character.matchingQuestions.Remove(questionToRemove);
-            }*/
         }
 
-        /*
-        public static void SetQuestionAnswer(this Character character, int index, bool answer = true)
+        public static void AddQuestion(this Character character,  int index)
         {
-            foreach (Question question in character.matchingQuestions)
+            if (!character.matchingQuestionIndexes.Contains(index))
             {
-                if (question.index == index)
-                {
-                    character.matchingQuestions.Remove(question);
-                    break;
-                }
+                character.matchingQuestionIndexes.Add(index);
             }
         }
-        */
+
         public static List<int> GetQuestionIndexes(this Character character)
         {
             return character.matchingQuestionIndexes;
-            /*List<int> indexes = new List<int>();
-
-            foreach (Question question in character.matchingQuestions)
-            {
-                indexes.Add(question.index);
-            }
-
-            return indexes;*/
         }
     }
 }
