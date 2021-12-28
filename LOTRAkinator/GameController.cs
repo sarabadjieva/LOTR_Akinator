@@ -166,7 +166,7 @@ namespace LOTRAkinator
             }
         }
 
-        private void WriteToFiles()
+        private void OverwriteFiles()
         {
             string charactersFile = string.Empty;
             string questionsFile = string.Empty;
@@ -245,12 +245,27 @@ namespace LOTRAkinator
 
             int mostCommonQuestionIndex = allIndexes.GroupBy(i => i).OrderByDescending(grp => grp.Count())
                 .Select(grp => grp.Key).First();
+            int mostCommonOccurences = allIndexes.Where(i => i.Equals(mostCommonQuestionIndex)).Count();
 
-            PrintMessage(defaultString: questionsById[mostCommonQuestionIndex]);
+            int leastCommonQuestionIndex = allIndexes.GroupBy(i => i).OrderByDescending(grp => grp.Count())
+                .Select(grp => grp.Key).Last();
+            int leastCommonOccurences = allIndexes.Where(i => i.Equals(leastCommonQuestionIndex)).Count();
+
+            int questionIndexToAsk = mostCommonQuestionIndex;
+
+            if (leastCommonOccurences == 1 && mostCommonOccurences < possibleCharacters.Count/2)
+
+            if (allIndexes.Where(i => i.Equals(leastCommonQuestionIndex)).Count() == 1)
+            {
+                //if there is a unique character maybe guess earlier
+                questionIndexToAsk = leastCommonQuestionIndex;
+            }
+
+            PrintMessage(defaultString: questionsById[questionIndexToAsk]);
 
             //process answer
             bool answer = GetAnswer() == Answer.Yes;
-            Question lastAskedQuestion = new Question(mostCommonQuestionIndex);
+            Question lastAskedQuestion = new Question(questionIndexToAsk);
             lastAskedQuestion.positiveAnswer = answer;
             askedQuestions.Add(lastAskedQuestion);
 
@@ -258,8 +273,8 @@ namespace LOTRAkinator
 
             foreach (var character in possibleCharacters)
             {
-                if ((character.ContainsQuestion(mostCommonQuestionIndex) && !answer) ||
-                    (!character.ContainsQuestion(mostCommonQuestionIndex) && answer))
+                if ((character.ContainsQuestion(questionIndexToAsk) && !answer) ||
+                    (!character.ContainsQuestion(questionIndexToAsk) && answer))
                 {
                     charactersToRemove.Add(character);
                 }
@@ -277,6 +292,26 @@ namespace LOTRAkinator
 
             if (GetAnswer() == Answer.Yes)
             {
+                //if there were more possible guesses add a question to distinguish the player's character
+                if (possibleCharacters.Count > 1)
+                {
+                    PrintMessage("Please add a question which will help me find the perfect answer straight away", "Моля добавете въпрос, който ще ми помогне да позная героя веднага");
+                    int newQuestionIndex = AddPlayersQuestion(name);
+
+                    foreach (var character in characters)
+                    {
+                        if (character.name == name)
+                        {
+                            character.AddQuestion(newQuestionIndex);
+                            break;
+                        }
+                    }
+
+                    OverwriteFiles();
+                    ResetData();
+                    ReadFiles();
+                }
+
                 PlayAgain();
             }
             else if (last)
@@ -316,7 +351,7 @@ namespace LOTRAkinator
                                 character.AddQuestion(index);
                             }
 
-                            WriteToFiles();
+                            OverwriteFiles();
                             ResetData();
                             ReadFiles();
                             PlayAgain();
@@ -339,42 +374,11 @@ namespace LOTRAkinator
                 //if the player's character does not match with any of the programs
                 PrintMessage("I don't know this character. Can you please add a question with which I can distinguish him from others?",
                     "Не знам този герой. Може ли да ми кажете въпрос, с който бих могла да го различа?");
-                string question = Console.ReadLine();
-                int newQuestionIndex = questionsById.Count;
-                questionsById.Add(newQuestionIndex, question);
 
-                //add the question to others
-                PrintMessage("For which other characters from the list is this question also valid (if it is)" + Environment.NewLine,
-                    "За кои други герои от списъка е валиден този въпрос(ако има такива)" + Environment.NewLine);
-                foreach (var character in characters)
-                {
-                    Console.Write(character.name + ' ');
-                }
-
-                int numOfCharacters = characters.Count;
-                List<string> charactersToAddQuestionTo = new List<string>();
-                string input = string.Empty;
-                for (int i = 0; i < numOfCharacters; i++)
-                {
-                    input = Console.ReadLine(); 
-
-                    if (string.IsNullOrEmpty(input))
-                    {
-                        break;
-                    }
-
-                    charactersToAddQuestionTo.Add(input);
-                }
-
-                foreach (var character in characters)
-                {
-                    if (charactersToAddQuestionTo.Contains(character.name))
-                    {
-                        character.AddQuestion(newQuestionIndex);
-                    }
-                }
+                int newQuestionIndex = AddPlayersQuestion();
 
                 //add the character and the asked matching questions to the array
+                //the newly added question is directly added
                 List<int> matchingQuestions = new List<int>() { newQuestionIndex };
 
                 foreach (Question askedQuestion in askedQuestions)
@@ -388,11 +392,55 @@ namespace LOTRAkinator
                 Character newCharacter = new Character(playerCharacterName, matchingQuestions);
                 characters.Add(newCharacter);
 
-                WriteToFiles();
+                OverwriteFiles();
                 ResetData();
                 ReadFiles();
                 PlayAgain();
             }
+        }
+
+        private int AddPlayersQuestion(string nameToSkip = "")
+        {
+            string question = Console.ReadLine();
+            int newQuestionIndex = questionsById.Count;
+            questionsById.Add(newQuestionIndex, question);
+
+            //add the question to others
+            PrintMessage("For which other characters from the list is this question also valid (if it is). Each character is written on a new line" + Environment.NewLine),
+                "За кои други герои от списъка е валиден този въпрос(ако има такива). Всеки герой се пише на отделен ред" + Environment.NewLine);
+            foreach (var character in characters)
+            {
+                if (!character.name.Equals(nameToSkip))
+                {
+                    Console.WriteLine(character.name);
+                }
+            }
+            Console.WriteLine();
+
+            int numOfCharacters = characters.Count;
+            List<string> charactersToAddQuestionTo = new List<string>();
+            string input = string.Empty;
+            for (int i = 0; i < numOfCharacters; i++)
+            {
+                input = Console.ReadLine();
+
+                if (string.IsNullOrEmpty(input))
+                {
+                    break;
+                }
+
+                charactersToAddQuestionTo.Add(input);
+            }
+
+            foreach (var character in characters)
+            {
+                if (charactersToAddQuestionTo.Contains(character.name))
+                {
+                    character.AddQuestion(newQuestionIndex);
+                }
+            }
+
+            return newQuestionIndex;
         }
 
         private void PlayAgain()
