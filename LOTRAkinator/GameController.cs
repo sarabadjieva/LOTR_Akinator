@@ -55,8 +55,8 @@ namespace LOTRAkinator
         private const string bgCharactersFilePath = "";
         private const string bgQuestionsFilePath = "";
         
-        private readonly List<Character> characters = new List<Character>();
-        private readonly Dictionary<int, string> questionsById = new Dictionary<int, string>();
+        private List<Character> characters = new List<Character>();
+        private Dictionary<int, string> questionsById = new Dictionary<int, string>();
 
         private Language currentLanguage = Language.English;
 
@@ -68,6 +68,7 @@ namespace LOTRAkinator
         public GameController(string languageSetting)
         {
             SetLanguageSetting(languageSetting);
+            ReadFiles();
         }
 
         public void StartGame()
@@ -91,8 +92,6 @@ namespace LOTRAkinator
                 default:
                     break;
             }
-
-            ReadFiles();
         }
 
         private void ReadFiles()
@@ -113,6 +112,7 @@ namespace LOTRAkinator
             }
 
             //open the questions file into a streamreader
+            questionsById = new Dictionary<int, string>();
             using (System.IO.StreamReader sr = new System.IO.StreamReader(questionsFile))
             {
                 while (!sr.EndOfStream) // Keep reading until we get to the end
@@ -129,19 +129,19 @@ namespace LOTRAkinator
             }
 
             //open the characters file
+            characters = new List<Character>();
             try
             {
-                //Pass the file path and file name to the StreamReader constructor
                 System.IO.StreamReader sr = new System.IO.StreamReader(charactersFile);
 
-                while (!sr.EndOfStream) // Keep reading until we get to the end
+                while (!sr.EndOfStream)
                 {
                     string splitMe = sr.ReadLine();
-                    string[] bananaSplits = splitMe.Split(new char[] { '-' }); //Split at the dash
+                    string[] bananaSplits = splitMe.Split(new char[] { '-' });
 
-                    if (bananaSplits.Length < 2) // If we get less than 2 results, discard them
+                    if (bananaSplits.Length < 2)
                         continue;
-                    else if (bananaSplits.Length == 2) // Easy part. If there are 2 results, add them to the dictionary
+                    else if (bananaSplits.Length == 2)
                     {
                         List<int> indexes = new List<int>();
                         if(bananaSplits[1].Length > 0)
@@ -237,12 +237,6 @@ namespace LOTRAkinator
                 allIndexes.RemoveAll(questionIndex => questionIndex == askedQuestion.index);
             }
 
-            //test
-            foreach (var item in possibleCharacters)
-            {
-                Console.Write(item.name + ' ') ;
-            }
-
             if (allIndexes.Count == 0)
             {
                 stop = true;
@@ -252,7 +246,7 @@ namespace LOTRAkinator
             int mostCommonQuestionIndex = allIndexes.GroupBy(i => i).OrderByDescending(grp => grp.Count())
                 .Select(grp => grp.Key).First();
 
-            Console.WriteLine(questionsById[mostCommonQuestionIndex]);
+            PrintMessage(defaultString: questionsById[mostCommonQuestionIndex]);
 
             //process answer
             bool answer = GetAnswer() == Answer.Yes;
@@ -269,12 +263,6 @@ namespace LOTRAkinator
                 {
                     charactersToRemove.Add(character);
                 }
-
-                /*if (character.matchingQuestionIndexes.Count == 0 || )
-                {
-                    //removes characters with no questions
-                    charactersToRemove.Add(character);
-                }*/
             }
 
             for (int i = 0; i < charactersToRemove.Count; i++)
@@ -295,16 +283,22 @@ namespace LOTRAkinator
             {
                 PrintMessage("What is the name of your character?", "Как се казва героят ви? Напишете на английски (засега)");
 
-                string playerCharacter = Console.ReadLine();
+                string playerCharacterName = Console.ReadLine();
+
+                if(string.IsNullOrEmpty(playerCharacterName))
+                {
+                    PlayAgain();
+                    return;
+                }
 
                 foreach (Character character in characters)
                 {
-                    if (character.name.ToLower() == playerCharacter.ToLower())
+                    if (character.name.ToLower() == playerCharacterName.ToLower())
                     {
                         PrintMessage("Here are your answers:", "Ето как сте отговорили:");
                         foreach (Question askedQuestion in askedQuestions)
                         {
-                            Console.WriteLine(questionsById[askedQuestion.index] + " " + askedQuestion.positiveAnswer);
+                            Console.WriteLine(askedQuestion.index + " " + questionsById[askedQuestion.index] + " " + askedQuestion.positiveAnswer);
                         }
 
                         PrintMessage("Have I made a mistake?", "Аз ли съм направила грешка?");
@@ -322,6 +316,10 @@ namespace LOTRAkinator
                                 character.AddQuestion(index);
                             }
 
+                            WriteToFiles();
+                            ResetData();
+                            ReadFiles();
+                            PlayAgain();
                             return;
                         }
 
@@ -329,9 +327,11 @@ namespace LOTRAkinator
                         if (GetAnswer() == Answer.Yes)
                         {
                             PrintMessage("Well, be more careful next time", "Бъдете по-внимателни следващия път");
+                            PlayAgain();
                             return;
                         }
 
+                        PlayAgain();
                         return;
                     }
                 }
@@ -340,11 +340,12 @@ namespace LOTRAkinator
                 PrintMessage("I don't know this character. Can you please add a question with which I can distinguish him from others?",
                     "Не знам този герой. Може ли да ми кажете въпрос, с който бих могла да го различа?");
                 string question = Console.ReadLine();
-                questionsById.Add(questionsById.Count, question);
+                int newQuestionIndex = questionsById.Count;
+                questionsById.Add(newQuestionIndex, question);
 
                 //add the question to others
-                PrintMessage("For which other characters from the list is this question also valid (if it is)",
-                    "За кои други герои от списъка е валиден този въпрос(ако има такива)");
+                PrintMessage("For which other characters from the list is this question also valid (if it is)" + Environment.NewLine,
+                    "За кои други герои от списъка е валиден този въпрос(ако има такива)" + Environment.NewLine);
                 foreach (var character in characters)
                 {
                     Console.Write(character.name + ' ');
@@ -369,12 +370,12 @@ namespace LOTRAkinator
                 {
                     if (charactersToAddQuestionTo.Contains(character.name))
                     {
-                        character.AddQuestion(questionsById.Count);
+                        character.AddQuestion(newQuestionIndex);
                     }
                 }
 
                 //add the character and the asked matching questions to the array
-                List<int> matchingQuestions = new List<int>() { questionsById.Count };
+                List<int> matchingQuestions = new List<int>() { newQuestionIndex };
 
                 foreach (Question askedQuestion in askedQuestions)
                 {
@@ -384,10 +385,11 @@ namespace LOTRAkinator
                     }
                 }
 
-                Character newCharacter = new Character(playerCharacter, matchingQuestions);
+                Character newCharacter = new Character(playerCharacterName, matchingQuestions);
                 characters.Add(newCharacter);
 
                 WriteToFiles();
+                ResetData();
                 ReadFiles();
                 PlayAgain();
             }
@@ -437,8 +439,16 @@ namespace LOTRAkinator
             }
         }
 
-        private void PrintMessage(string enString, string bgString)
+        private void PrintMessage(string enString = "", string bgString = "", string defaultString = "")
         {
+            Console.WriteLine("------------------------------------------------");
+
+            if (!string.IsNullOrEmpty(defaultString))
+            {
+                Console.WriteLine(defaultString);
+                return;
+            }
+
             switch (currentLanguage)
             {
                 case Language.English:
