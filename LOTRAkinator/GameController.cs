@@ -308,7 +308,6 @@ namespace LOTRAkinator
                     }
 
                     OverwriteFiles();
-                    ResetData();
                     ReadFiles();
                 }
 
@@ -352,7 +351,6 @@ namespace LOTRAkinator
                             }
 
                             OverwriteFiles();
-                            ResetData();
                             ReadFiles();
                             PlayAgain();
                             return;
@@ -393,7 +391,6 @@ namespace LOTRAkinator
                 characters.Add(newCharacter);
 
                 OverwriteFiles();
-                ResetData();
                 ReadFiles();
                 PlayAgain();
             }
@@ -406,7 +403,7 @@ namespace LOTRAkinator
             questionsById.Add(newQuestionIndex, question);
 
             //add the question to others
-            PrintMessage("For which other characters from the list is this question also valid (if it is). Each character is written on a new line" + Environment.NewLine),
+            PrintMessage("For which other characters from the list is this question also valid (if it is). Each character is written on a new line" + Environment.NewLine,
                 "За кои други герои от списъка е валиден този въпрос(ако има такива). Всеки герой се пише на отделен ред" + Environment.NewLine);
             foreach (var character in characters)
             {
