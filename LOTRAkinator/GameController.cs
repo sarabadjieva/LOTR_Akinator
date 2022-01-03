@@ -67,7 +67,8 @@ namespace LOTRAkinator
 
         public GameController(string languageSetting)
         {
-            SetLanguageSetting(languageSetting);
+            //SetLanguageSetting(languageSetting);
+            SetLanguageSetting("en");
             ReadFiles();
         }
 
@@ -295,7 +296,7 @@ namespace LOTRAkinator
                 //if there were more possible guesses add a question to distinguish the player's character
                 if (possibleCharacters.Count > 1)
                 {
-                    PrintMessage("Please add a question which will help me find the perfect answer straight away", "Моля добавете въпрос, който ще ми помогне да позная героя веднага");
+                    PrintMessage("Please add a question which will help me find the perfect answer straight away(i had some doubts)", "Моля добавете въпрос, който ще ми помогне да позная героя веднага(чудех се между няколко)");
                     int newQuestionIndex = AddPlayersQuestion(name);
 
                     foreach (var character in characters)
