@@ -1,0 +1,29 @@
+Aragorn-0,1,10
+Arwen-2
+Frodo-0,1,3,8
+Boromir-0,1,7
+Meriadoc Brandybuck-0,1,3
+Celeborn-1,2,7
+Denethor-1
+Elrond-1,2,7
+Eomer-1
+Eowyn-6,7
+Erkenbrand-1
+Faramir-1,7
+Galadriel-2,7
+Samwise Gamgee-0,1,3,8
+Gandalf-0,1
+Gimli-0,1
+Glorfindel-1,2
+Gollum-1,3,8
+Gwaihir-1,7
+Legolas-0,1,2
+Saruman-1
+Sauron-1,8
+Theoden-1
+Peregrin Took-0,1,3
+Treebeard-1
+Grima-1
+Lurtz-1,4
+Shelob-5
+Ugluk-9,1,4
