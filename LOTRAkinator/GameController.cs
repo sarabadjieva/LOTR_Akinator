@@ -262,7 +262,7 @@ namespace LOTRAkinator
                 questionIndexToAsk = leastCommonQuestionIndex;
             }
 
-            PrintMessage(defaultString: questionsById[questionIndexToAsk]);
+            PrintMessage(defaultString: questionsById[questionIndexToAsk] + "(y/n)");
 
             //process answer
             bool answer = GetAnswer() == Answer.Yes;
