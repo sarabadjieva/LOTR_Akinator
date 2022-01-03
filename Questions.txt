@@ -1,0 +1,11 @@
+0:Is your character from The Fellowship of The Ring?
+1:Is your character a male?
+2:Is your character an elf?
+3:Is your character a hobbit?
+4:Is your character an orc?
+5:Is your character a spider?
+6:Has your character defeated the Witch-king?
+7:Does your character have a brother?
+8:Is or has your character been the One Ring-bearer?
+9:Has your character killed the character of Sean Bean?
+10:Is your character in love with an elf?
